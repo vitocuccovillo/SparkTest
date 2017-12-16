@@ -10,10 +10,9 @@ object WordCounter {
     sc.textFile("file:///C:/Users/vitoc/Desktop/text.txt")
         .flatMap(_.split(",").drop(1))
         .map((_,1))
-        .reduceByKey(_+_)
+        .reduceByKey(_+_) //cosa fare con i valori, in questo caso li somma perchè ha già raggruppato per chiave
         .collect()
         .foreach(println)
-
 
   }
 
