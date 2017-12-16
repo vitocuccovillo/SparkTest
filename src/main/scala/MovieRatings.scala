@@ -11,7 +11,7 @@ object MovieRatings {
     val moviesDatasetRDD = sc.textFile("file:///C:/Users/vitoc/Desktop/Materiale Tesi/Esercitazione/moviesLight.csv")
 //    val movies: RDD[(String, String)] = moviesDatasetRDD.map(x => (x.split(",")(0), x.split(",")(x.split(",").length - 1)))
 //    movies.foreach(println)
-
+    val moviesWithGen = moviesDatasetRDD.map(movie => (movie.substring(0,movie.indexOf(',')),movie.substring(movie.lastIndexOf(',')+1,movie.length).split('|'))).foreach(println)
     val genereWithMovies = moviesDatasetRDD
                           .map(movie => (movie.substring(movie.lastIndexOf(',')+1,movie.length).split('|')(0),Array(movie.substring(0,movie.indexOf(',')))))
                           .reduceByKey(_++_)
