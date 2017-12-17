@@ -18,7 +18,7 @@ object MovieRatingsOptimized {
     //val rd = merged.map{ case (film, (gen,rat)) => (gen,rat) }.reduceByKey(_+_)
 
 
-    val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey{case ((r1,c1),(r2,c2)) => ((r1*c1 + r2*c2) / (c1 + c2),1)}
+    val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey{case ((r1,c1),(r2,c2)) => ((r1*c1 + r2*c2) / (c1 + c2),0)}
     rd.foreach(println)
 
 
