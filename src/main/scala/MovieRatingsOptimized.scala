@@ -17,7 +17,7 @@ object MovieRatingsOptimized {
     val rd:RDD[(String,Double)] = merged.flatMap(x => x._2._1.split('|')
                                         .map(y => (y,(x._2._2.toDouble,1))))
                                         .reduceByKey((r1,r2) => ((r1._1*r1._2 + r2._1*r2._2)/(r1._2 + r2._2),(r1._2 + r2._2)))
-                                        .map{case(a,(b,c)) => (a,b)}
+                                        .map{case(a,(b,_)) => (a,b)}
     rd.foreach(println)
 
   }
