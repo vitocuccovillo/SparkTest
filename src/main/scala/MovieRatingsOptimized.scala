@@ -15,19 +15,13 @@ object MovieRatingsOptimized {
     val merged = moviesWithGen.join(ratings)
     //val bygen = merged.flatMap{ case(f,(r,g)) => (g,r)}
     // QUESTO MANIPOLA LE COPPIE! da coppia di coppie a coppia singola
-    //val rd = merged.map{ case (film, (gen,rat)) => (gen,rat) }.reduceByKey(_+_)
+    //val rdd = merged.map{ case (film, (gen,rat)) => (gen,rat) }.reduceByKey(_+_).foreach(println)
 
-
-    val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey{case ((r1,c1),(r2,c2)) => ((r1*c1 + r2*c2) / (c1 + c2),0)}
+    //val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey{case ((r1,c1),(r2,c2)) => ((r1*c1 + r2*c2)/(c1+c2), c1 + c2)}
+    //val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey{case ((r1,c1),(r2,c2)) => ((r1*c1 + r2*c2)/(c1+c2), c1 + c2)}
+    val rd = merged.flatMap(x => x._2._1.split('|').map(y => (y,(x._2._2.toDouble,1)))).reduceByKey((r1,r2) => ((r1._1*r1._2 + r2._1*r2._2)/(r1._2 + r2._2),(r1._2 + r2._2)))
+                    .map{case(a,(b,c)) => (a,b)}
     rd.foreach(println)
-
-
-
-
-
-
-
-
 
 
 
