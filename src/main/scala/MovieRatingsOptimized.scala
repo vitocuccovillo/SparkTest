@@ -5,7 +5,7 @@ object MovieRatingsOptimized {
 
   def main(args: Array[String]): Unit = {
 
-    val conf = new SparkConf().setMaster("local[*]").setAppName("myApp")
+    val conf = new SparkConf().setMaster("local[*]").setAppName("MovieRatingsMulti")
     val sc = new SparkContext(conf)
 
     val moviesDatasetRDD = sc.textFile("file:///C:/Users/vitoc/Desktop/Materiale Tesi/Esercitazione/movies.csv")
