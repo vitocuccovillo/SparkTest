@@ -21,8 +21,8 @@ object MovieRatingsNew {
     val merged:RDD[(String,(String,String))] = mg.join(ratings)
 
     val genAvg = merged.map({case(_,(gen,rat)) => (gen, (rat.toDouble,1))})
-                       .reduceByKey({case (r1,r2) => ((r1._1*r1._2 + r2._1*r2._2)/(r1._2 + r2._2),(r1._2 + r2._2))})
-    var result = genAvg.foreach(println)
+                       .reduceByKey((r1,r2) => ((r1._1*r1._2 + r2._1*r2._2)/(r1._2 + r2._2),(r1._2 + r2._2)))
+    var result = genAvg.map({case (gen,(rat,_)) => (gen,rat)}).foreach(println)
 
   }
 
