@@ -2,6 +2,7 @@ import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 object MLLibTest {
@@ -9,15 +10,20 @@ object MLLibTest {
   val conf = new SparkConf().setMaster("local[*]").setAppName("myApp")
   val sc = new SparkContext(conf)
 
+  val sparkSession = SparkSession.builder .master("local[*]") .appName("Bank") .getOrCreate()
+
   def main(args:Array[String]):Unit = {
 
-    val runType = 1
+    val runType = 2
 
     if (runType == 0) {
       KMeansRun()
     }
-    else {
+    else if (runType == 1) {
       NaiveBayesRun()
+    }
+    else {
+      Bank()
     }
 
 
@@ -61,4 +67,13 @@ object MLLibTest {
     val sameModel = NaiveBayesModel.load(sc, "data/NB_model")
 
   }
+
+  def Bank() = {
+
+    val df = sparkSession.read.format("com.databricks.spark.csv").option("header", "true").load("data/bank-full.csv")
+
+    df.printSchema()
+
+  }
+
 }
