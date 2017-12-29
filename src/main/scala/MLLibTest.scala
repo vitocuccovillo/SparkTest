@@ -117,7 +117,7 @@ object MLLibTest {
     val prediction = model.transform(test)
     prediction.show(100, false)
 
-    val acc = prediction.filter(x => x.getAs[Double](0) == x.getAs[Double](4)).count() / test.count()
+    val acc = 1.0*prediction.filter(x => x.getAs[Double](0) == x.getAs[Double](4)).count() / test.count()
     println("Accuratezza: " + acc)
     model.write.overwrite.save("data/bank_model")
 
