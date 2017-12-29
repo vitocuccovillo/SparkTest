@@ -78,13 +78,17 @@ object MLLibTest {
     //df.printSchema()
     val data = sparkSession.read.option("header","true").csv("data/bank-full.csv")
     val dataFixed = data.withColumn("age", toInt(data("age"))).withColumn("balance",toInt(data("balance")))
-                      .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration")))
+                      .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration"))).withColumn("previous",toInt(data("previous")))
     dataFixed.show()
 
     val bankRdd = dataFixed.rdd.map{r => ({if (r.getAs[String]("label") == "yes") 1 else 0},
-                                          ml.linalg.Vectors.dense(r.getAs[Int]("age"),
-                                                                  r.getAs[Int]("duration"),
-                                                                  r.getAs[Int]("day")))}
+                                          {val testDouble = Seq(r.getAs[Int]("age"),
+                                            r.getAs[Int]("duration"),
+                                            r.getAs[Int]("day"),
+                                            r.getAs[Int]("previous"))
+                                            .map(x=>x.toDouble).to[scala.Vector].toArray
+                                            ml.linalg.Vectors.dense(testDouble)}
+                                          )}
 
     //catMaps.foreach(println)
 
