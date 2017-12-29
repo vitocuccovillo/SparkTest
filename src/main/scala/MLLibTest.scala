@@ -108,8 +108,8 @@ object MLLibTest {
                                         })}
 
     val bankDF = sparkSession.createDataFrame(bankRdd).toDF("label", "features")
-    bankDF.show(100, false)
-    val Array(training,test) = bankDF.randomSplit(Array(0.7,0.3))
+    bankDF.show(1000, false)
+    val Array(training,test) = bankDF.randomSplit(Array(0.7,0.3),1)
     val model = new ml.classification.NaiveBayes().fit(training)
     val prediction = model.transform(test)
     prediction.show(100, false)
