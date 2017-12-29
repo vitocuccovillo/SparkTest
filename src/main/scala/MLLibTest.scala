@@ -76,12 +76,9 @@ object MLLibTest {
 
     val toInt = udf[Int, String]( _.toInt)
 
-    //val df = sparkSession.read.format("com.databricks.spark.csv").option("header", "true").load("data/bank-full.csv")
-    //df.printSchema()
     val data = sparkSession.read.option("header","true").csv("data/bank-full.csv")
     val dataFixed = data.withColumn("age", toInt(data("age"))).withColumn("balance",toInt(data("balance")))
                       .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration"))).withColumn("previous",toInt(data("previous")))
-    //dataFixed.show()
 
     val stringFormatColHeaders = dataFixed.schema.fieldNames
 
@@ -103,7 +100,7 @@ object MLLibTest {
     val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_indexed"),
                                         {
                                           var fields:Seq[Double] = Seq()
-                                          for (c <- 0 to r.length - 2) {
+                                          for (c <- 0 to r.length - 2) { //metto -2 per escludere l'ultima colonna che contiene le label
                                             fields = fields :+ r.getAs[Double](c)
                                           }
                                           val fArray = fields.to[scala.Vector].toArray
