@@ -1,4 +1,6 @@
 
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.feature.StringIndexer
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
@@ -79,29 +81,45 @@ object MLLibTest {
     val data = sparkSession.read.option("header","true").csv("data/bank-full.csv")
     val dataFixed = data.withColumn("age", toInt(data("age"))).withColumn("balance",toInt(data("balance")))
                       .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration"))).withColumn("previous",toInt(data("previous")))
-    dataFixed.show()
+    //dataFixed.show()
 
-    val bankRdd = dataFixed.rdd.map{r => ({if (r.getAs[String]("label") == "yes") 1 else 0},
-                                          {val testDouble = Seq(r.getAs[Int]("age"),
-                                            r.getAs[Int]("duration"),
-                                            r.getAs[Int]("day"),
-                                            r.getAs[Int]("previous"))
-                                            .map(x=>x.toDouble).to[scala.Vector].toArray
-                                            ml.linalg.Vectors.dense(testDouble)}
-                                          )}
+    val stringFormatColHeaders = dataFixed.schema.fieldNames
 
-    //catMaps.foreach(println)
+    // Conversione in numerico delle features categoriche
+    val labelName = "label"
+    val indexers = stringFormatColHeaders.map(header => new StringIndexer().setInputCol(header).setOutputCol(if(header != labelName)header +"_indexed" else labelName+"_indexed"))
+    val pipeline = new Pipeline().setStages(indexers)
+    val pipelineModel = pipeline.fit(dataFixed)
+    val modifiedDF = pipelineModel.transform(dataFixed)
 
-    //val ppp =  catMaps.map { case (id, catMap) => id -> Row.fromSeq(catMap) }
+    var cleanDF = modifiedDF
+
+    for (i <- 0 until 17) {
+      cleanDF = cleanDF.drop(cleanDF.columns(0))
+    }
+
+    cleanDF.printSchema()
+
+    val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_indexed"),
+                                        {
+                                          var fields:Seq[Double] = Seq()
+                                          for (c <- 0 to r.length - 2) {
+                                            fields = fields :+ r.getAs[Double](c)
+                                          }
+                                          val fArray = fields.to[scala.Vector].toArray
+                                          ml.linalg.Vectors.dense(fArray)
+                                        })}
+
     val bankDF = sparkSession.createDataFrame(bankRdd).toDF("label", "features")
-
-    bankDF.show()
+    bankDF.show(100, false)
     val Array(training,test) = bankDF.randomSplit(Array(0.7,0.3))
-
     val model = new ml.classification.NaiveBayes().fit(training)
     val prediction = model.transform(test)
-    prediction.show()
-    model.save("data/bank_model")
+    prediction.show(100, false)
+
+    val acc = prediction.filter(x => x.getAs[Double](0) == x.getAs[Double](4)).count() / test.count()
+    println("Accuratezza: " + acc)
+    model.write.overwrite.save("data/bank_model")
 
   }
 
