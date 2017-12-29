@@ -1,16 +1,18 @@
+
 import org.apache.spark.mllib.classification.{NaiveBayes, NaiveBayesModel}
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.functions._
+import org.apache.spark.{SparkConf, SparkContext, ml}
+
 
 object MLLibTest {
 
   val conf = new SparkConf().setMaster("local[*]").setAppName("myApp")
   val sc = new SparkContext(conf)
-
-  val sparkSession = SparkSession.builder .master("local[*]") .appName("Bank") .getOrCreate()
+  val sparkSession = SparkSession.builder.master("local[*]").appName("Bank").getOrCreate()
 
   def main(args:Array[String]):Unit = {
 
@@ -70,9 +72,32 @@ object MLLibTest {
 
   def Bank() = {
 
-    val df = sparkSession.read.format("com.databricks.spark.csv").option("header", "true").load("data/bank-full.csv")
+    val toInt = udf[Int, String]( _.toInt)
 
-    df.printSchema()
+    //val df = sparkSession.read.format("com.databricks.spark.csv").option("header", "true").load("data/bank-full.csv")
+    //df.printSchema()
+    val data = sparkSession.read.option("header","true").csv("data/bank-full.csv")
+    val dataFixed = data.withColumn("age", toInt(data("age"))).withColumn("balance",toInt(data("balance")))
+                      .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration")))
+    dataFixed.show()
+
+    val bankRdd = dataFixed.rdd.map{r => ({if (r.getAs[String]("label") == "yes") 1 else 0},
+                                          ml.linalg.Vectors.dense(r.getAs[Int]("age"),
+                                                                  r.getAs[Int]("duration"),
+                                                                  r.getAs[Int]("day")))}
+
+    //catMaps.foreach(println)
+
+    //val ppp =  catMaps.map { case (id, catMap) => id -> Row.fromSeq(catMap) }
+    val bankDF = sparkSession.createDataFrame(bankRdd).toDF("label", "features")
+
+    bankDF.show()
+    val Array(training,test) = bankDF.randomSplit(Array(0.7,0.3))
+
+    val model = new ml.classification.NaiveBayes().fit(training)
+    val prediction = model.transform(test)
+    prediction.show()
+    model.save("data/bank_model")
 
   }
 
