@@ -76,15 +76,19 @@ object MLLibTest {
 
     val toInt = udf[Int, String]( _.toInt)
 
-    val data = sparkSession.read.option("header","true").csv("data/bank-full.csv")
+    val data = sparkSession.read.option("header","true").csv("data/bank.csv")
     val dataFixed = data.withColumn("age", toInt(data("age"))).withColumn("balance",toInt(data("balance")))
                       .withColumn("day",toInt(data("day"))).withColumn("duration",toInt(data("duration"))).withColumn("previous",toInt(data("previous")))
 
-    val stringFormatColHeaders = dataFixed.schema.fieldNames
+
+    // ottenere tutti gli attributi stringa
+    val categoricals = dataFixed.dtypes.filter (_._2 == "StringType") map (_._1)
 
     // Conversione in numerico delle features categoriche
-    val labelName = "label"
-    val indexers = stringFormatColHeaders.map(header => new StringIndexer().setInputCol(header).setOutputCol(if(header != labelName)header +"_indexed" else labelName+"_indexed"))
+    val indexers = dataFixed.schema.fieldNames.map(header => new StringIndexer().setInputCol(header).setOutputCol(header +"_indexed"))
+/*    val encoders = categoricals.map (
+      c => new OneHotEncoder().setInputCol(s"${c}_indexed").setOutputCol(s"${c}_enc")
+    )*/
     val pipeline = new Pipeline().setStages(indexers)
     val pipelineModel = pipeline.fit(dataFixed)
     val modifiedDF = pipelineModel.transform(dataFixed)
@@ -96,8 +100,9 @@ object MLLibTest {
     }
 
     cleanDF.printSchema()
+    cleanDF.show(100,false)
 
-    val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_indexed"),
+    val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_enc"),
                                         {
                                           var fields:Seq[Double] = Seq()
                                           for (c <- 0 to r.length - 2) { //metto -2 per escludere l'ultima colonna che contiene le label
@@ -110,7 +115,7 @@ object MLLibTest {
     val bankDF = sparkSession.createDataFrame(bankRdd).toDF("label", "features")
     bankDF.show(false)
     val Array(training,test) = bankDF.randomSplit(Array(0.7,0.3))
-    val model = new ml.classification.NaiveBayes().fit(training)
+    val model = new ml.classification.NaiveBayes().setModelType("multinomial").setSmoothing(1.0).fit(training)
     val prediction = model.transform(test)
     prediction.show()
 
