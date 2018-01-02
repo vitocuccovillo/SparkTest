@@ -85,7 +85,7 @@ object MLLibTest {
     val categoricals = dataFixed.dtypes.filter (_._2 == "StringType") map (_._1)
 
     // Conversione in numerico delle features categoriche
-    val indexers = dataFixed.schema.fieldNames.map(header => new StringIndexer().setInputCol(header).setOutputCol(header +"_indexed"))
+    val indexers = dataFixed.schema.fieldNames.map(header => new StringIndexer().setInputCol(header).setOutputCol(header +"_idx"))
 /*    val encoders = categoricals.map (
       c => new OneHotEncoder().setInputCol(s"${c}_indexed").setOutputCol(s"${c}_enc")
     )*/
@@ -102,7 +102,7 @@ object MLLibTest {
     cleanDF.printSchema()
     cleanDF.show(100,false)
 
-    val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_enc"),
+    val bankRdd = cleanDF.rdd.map{r => (r.getAs[Double]("label_idx"),
                                         {
                                           var fields:Seq[Double] = Seq()
                                           for (c <- 0 to r.length - 2) { //metto -2 per escludere l'ultima colonna che contiene le label
