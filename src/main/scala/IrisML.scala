@@ -35,7 +35,11 @@ object IrisML {
     prediction.show()
 
     val acc = 1.0*prediction.filter(x => x.getAs[Double](2) == x.getAs[Double](5)).count() / test.count()
-    println("Accuratezza: " + acc)
+    println("---------------------------------------")
+    println()
+    println("ACCURATEZZA: " + acc)
+    println
+    println("---------------------------------------")
     model.write.overwrite.save("data/iris_model")
 
   }
