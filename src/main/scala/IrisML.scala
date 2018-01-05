@@ -18,6 +18,7 @@ object IrisML {
     val iris = _iris.rdd.map{case Row(sl:Double,sw:Double,pl:Double,pw:Double,s:String) =>
                                       (Vectors.dense(sl,sw,pl,pw),s)
                             }.toDF("features","species")
+
     iris.show()
 
     val stringIndexer = new StringIndexer().setInputCol("species").setOutputCol("label")
