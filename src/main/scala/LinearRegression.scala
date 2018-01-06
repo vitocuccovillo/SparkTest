@@ -1,6 +1,6 @@
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{Row, SparkSession}
 
@@ -21,6 +21,7 @@ object LinearRegressionTest {
     val linearRegr = new LinearRegression().setFeaturesCol("features").setLabelCol("label")
     val model = linearRegr.fit(advDF)
     val pred = model.transform(advDF)
+    println("Coefficients: " + model.coefficients + " Intercept: " + model.intercept)
     pred.show(5)
 
     val evaluator = new RegressionEvaluator().setPredictionCol("prediction").setLabelCol("label")
@@ -43,6 +44,7 @@ object LinearRegressionTest {
 
     val cv = new CrossValidator().setEstimator(lr).setEstimatorParamMaps(param_grid).setEvaluator(cv_evaluator).setNumFolds(4)
     val cv_model = cv.fit(train)
+    println(cv_model.bestModel.explainParams())
 
     val pred_training_cv = cv_model.transform(train)
     val pred_test_cv = cv_model.transform(test)
@@ -50,7 +52,9 @@ object LinearRegressionTest {
     println(evaluator.setMetricName("r2").evaluate(pred_training_cv))
     println(evaluator.setMetricName("r2").evaluate(pred_test_cv))
 
-    println(s"Weights: ${cv_model.bestModel} Intercept: ${cv_model.bestModel}")
+    val bb = cv_model.bestModel.asInstanceOf[LinearRegressionModel]
+    println("CV COEFF: " + bb.coefficients)
+    println("CV INTER: " + bb.intercept)
 
   }
 
