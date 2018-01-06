@@ -47,9 +47,9 @@ object DecisionTree {
     val show_columns = Array("features", "label", "prediction", "rawPrediction", "probability")
 
    val pred_training_cv = cv_model.transform(training)
-    pred_training_cv.show(5, false)
+    pred_training_cv.select(show_columns.head, show_columns.tail: _*).show(5, false)
     val pred_test_cv = cv_model.transform(test)
-    pred_test_cv.show(5, false)
+    pred_test_cv.select(show_columns.head, show_columns.tail: _*).show(5, false)
 
     val label_and_pred = cv_model.transform(cuse_df).select("label", "prediction")
     println(label_and_pred.rdd.zipWithIndex().countByKey())
