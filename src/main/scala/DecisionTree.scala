@@ -52,7 +52,7 @@ object DecisionTree {
     pred_test_cv.show(5, false)
 
     val label_and_pred = cv_model.transform(cuse_df).select("label", "prediction")
-    label_and_pred.rdd.zipWithIndex().countByKey()
+    println(label_and_pred.rdd.zipWithIndex().countByKey())
 
     println("The best MaxDepth is: " + cv_model.bestModel.asInstanceOf[DecisionTreeClassificationModel].getMaxDepth)
 
