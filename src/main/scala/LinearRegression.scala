@@ -1,6 +1,7 @@
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{Row, SparkSession}
 
 object LinearRegressionTest {
@@ -25,6 +26,32 @@ object LinearRegressionTest {
     val evaluator = new RegressionEvaluator().setPredictionCol("prediction").setLabelCol("label")
     val pp = evaluator.setMetricName("r2").evaluate(pred)
     println(pp)
+
+
+    //CROSS FOLD VALIDATION
+
+    val lr = new LinearRegression().setFeaturesCol("features").setLabelCol("label")
+
+    val param_grid = new ParamGridBuilder()
+      .addGrid(lr.regParam, Array(0, 0.5, 1))
+      .addGrid(lr.elasticNetParam, Array(0, 0.5, 1))
+      .build()
+
+    val cv_evaluator = new RegressionEvaluator().setPredictionCol("prediction").setLabelCol("label").setMetricName("r2")
+
+    val Array(train,test) = advDF.randomSplit(Array(0.8,0.2),123)
+
+    val cv = new CrossValidator().setEstimator(lr).setEstimatorParamMaps(param_grid).setEvaluator(cv_evaluator).setNumFolds(4)
+    val cv_model = cv.fit(train)
+
+    val pred_training_cv = cv_model.transform(train)
+    val pred_test_cv = cv_model.transform(test)
+
+    println(evaluator.setMetricName("r2").evaluate(pred_training_cv))
+    println(evaluator.setMetricName("r2").evaluate(pred_test_cv))
+
+    println(s"Weights: ${cv_model.bestModel} Intercept: ${cv_model.bestModel}")
+
   }
 
 }
