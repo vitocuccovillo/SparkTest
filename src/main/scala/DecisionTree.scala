@@ -31,7 +31,6 @@ object DecisionTree {
     val pipeline_model = pipeline.fit(cuse)
 
     val final_columns = features :+ "features" :+ "label"
-    println(final_columns)
     val cuse_df = pipeline_model.transform(cuse).select(final_columns.head, final_columns.tail: _*)
 
     cuse_df.show(5,false)
