@@ -2,6 +2,7 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.{Row, SparkSession}
+import java.lang.Double
 
 object LinearRegressionTest {
 
@@ -9,12 +10,12 @@ object LinearRegressionTest {
 
     val spark = SparkSession.builder.master("local[*]").appName("Advertising").getOrCreate()
     val adv = spark.read.option("header",true).option("inferSchema",true).csv("data/Advertising.csv")
+    import spark.implicits._
 
     adv.show(5)
-    import spark.implicits._
-    //val advDF = adv.rdd.map(a => (a.toSeq.toArray[Double],a.getAs("Sales"))).toDF("features","label")
     val advDF = adv.rdd.map{ case Row(tv:Double, radio:Double, news:Double, sales:Double)  =>
                             (Vectors.dense(tv,radio,news),sales)}.toDF("features","label")
+
     advDF.show(5)
 
     val linearRegr = new LinearRegression().setFeaturesCol("features").setLabelCol("label")
