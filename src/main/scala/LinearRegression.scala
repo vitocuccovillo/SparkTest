@@ -2,7 +2,6 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.{Row, SparkSession}
-import java.lang.Double
 
 object LinearRegressionTest {
 
