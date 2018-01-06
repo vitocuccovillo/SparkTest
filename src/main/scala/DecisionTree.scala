@@ -14,7 +14,7 @@ object DecisionTree {
 
     cuse.show(5)
 
-    val categorical_cols = cuse.columns.toSeq.take(4)
+    val categorical_cols = cuse.columns.toSeq.take(3)
 
     val _stringIdxStage = categorical_cols.map(c => new StringIndexer().setInputCol(c).setOutputCol(c + "_idx"))
     val stringIdxStage = _stringIdxStage :+ new StringIndexer().setInputCol("y").setOutputCol("label")
