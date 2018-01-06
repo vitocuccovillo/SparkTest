@@ -1,4 +1,8 @@
-import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer}
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
+import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
+import org.apache.spark.ml.feature.{OneHotEncoder, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.SparkSession
 
 object DecisionTree {
@@ -12,30 +16,27 @@ object DecisionTree {
 
     val categorical_cols = cuse.columns.toSeq.take(4)
 
-    val stringIdxStage = for (c <- categorical_cols) yield new StringIndexer().setInputCol(c).setOutputCol(c + "_idx")
-    stringIdxStage.toArray :+ new StringIndexer().setInputCol("y").setOutputCol("label")
+    val _stringIdxStage = categorical_cols.map(c => new StringIndexer().setInputCol(c).setOutputCol(c + "_idx"))
+    val stringIdxStage = _stringIdxStage :+ new StringIndexer().setInputCol("y").setOutputCol("label")
+    println(stringIdxStage.length)
 
-    println(stringIdxStage)
+    val onehotencoderStages = categorical_cols.map(c => new OneHotEncoder().setInputCol(c + "_idx").setOutputCol(c + "_onehot"))
 
-    val onehotencoderStages = for (c <- categorical_cols) yield new OneHotEncoder().setInputCol(c + "_idx").setOutputCol(c + "_onehot")
+    val features = categorical_cols.map(c => c + "_onehot")
 
-    val features = for (c <- categorical_cols) yield "onehot_" + c
+    val vectorassembler_stage = new VectorAssembler().setInputCols(features.toArray).setOutputCol("features")
 
-    println(onehotencoderStages)
-    println(features)
-
-/*    val vectorassembler_stage = new VectorAssembler().setInputCols(features.toArray).setOutputCol("features")
-
-    val pipeline = new Pipeline().setStages(Array(stringIdxStage, onehotencoderStages,  vectorassembler_stage))
-
+    val stages = stringIdxStage ++ onehotencoderStages :+ vectorassembler_stage
+    val pipeline = new Pipeline().setStages(stages.toArray)
     val pipeline_model = pipeline.fit(cuse)
+
     val final_columns = features +: Array("features", "label")
 
     val cuse_df = pipeline_model.transform(cuse)
 
-    cuse_df.show(5)*/
+    cuse_df.show(5,false)
 
-/*    val Array(training, test) = cuse_df.randomSplit(Array(0.8, 0.2), 1234)
+    val Array(training, test) = cuse_df.randomSplit(Array(0.8, 0.2), 1234)
 
     val dt = new DecisionTreeClassifier().setFeaturesCol("features").setLabelCol("label")
     val param_grid = new ParamGridBuilder().addGrid(dt.maxDepth, Array(2,3,4,5)).build()
@@ -45,15 +46,15 @@ object DecisionTree {
 
     val show_columns = Array("features", "label", "prediction", "rawPrediction", "probability")
 
-    val pred_training_cv = cv_model.transform(training)
-    val pred_training_cv.select(show_columns).show(5, false)
+   val pred_training_cv = cv_model.transform(training)
+    pred_training_cv.show(5, false)
     val pred_test_cv = cv_model.transform(test)
-    val pred_test_cv.select(show_columns).show(5, false)
+    pred_test_cv.show(5, false)
 
     val label_and_pred = cv_model.transform(cuse_df).select("label", "prediction")
     label_and_pred.rdd.zipWithIndex().countByKey()
 
-    println("The best MaxDepth is:", cv_model.bestModel)*/
+    println("The best MaxDepth is: " + cv_model.bestModel.asInstanceOf[DecisionTreeClassificationModel].getMaxDepth)
 
   }
 
